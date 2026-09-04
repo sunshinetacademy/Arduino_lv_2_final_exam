@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>امتحان المستوى الثاني — أردوينو | الأكاديمية</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{--p:#4f46e5;--p2:#06b6d4;--ok:#16a34a;--bad:#dc2626;--warn:#f59e0b;--dark:#0f172a}
+*{font-family:'Cairo',sans-serif;box-sizing:border-box}
+body{margin:0;background:#f1f5f9;color:#1e293b}
+.screen{display:none;min-height:100vh;padding:20px}
+.screen.active{display:block}
+.hero{background:linear-gradient(135deg,#312e81,#0f172a 60%,#164e63);color:#fff;border-radius:24px;padding:40px 24px;text-align:center;max-width:760px;margin:40px auto;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.hero h1{font-size:2rem;margin:10px 0}
+.hero .badge{display:inline-block;background:#fbbf24;color:#78350f;font-weight:900;padding:4px 16px;border-radius:30px;margin-bottom:8px}
+.meta-chips{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:18px 0}
+.chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);padding:8px 16px;border-radius:30px;font-weight:700}
+.reg-card{background:#fff;border-radius:20px;max-width:560px;margin:0 auto;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+.reg-card label{font-weight:800;display:block;margin:14px 0 6px}
+.reg-card input{width:100%;padding:12px 14px;border:2px solid #cbd5e1;border-radius:12px;font-size:1rem;font-family:'Cairo'}
+.reg-card input:focus{outline:none;border-color:var(--p)}
+.date-box{background:#eef2ff;border:2px dashed #6366f1;border-radius:12px;padding:12px;text-align:center;font-weight:800;color:#3730a3;margin-top:16px}
+.btn{border:none;cursor:pointer;border-radius:50px;padding:14px 34px;font-size:1.1rem;font-weight:900;font-family:'Cairo';transition:.2s}
+.btn:hover{transform:scale(1.04)}
+.btn-primary{background:linear-gradient(90deg,var(--p),var(--p2));color:#fff;box-shadow:0 8px 20px rgba(79,70,229,.4)}
+.btn-green{background:var(--ok);color:#fff}
+.btn-red{background:var(--bad);color:#fff}
+.btn-gray{background:#64748b;color:#fff}
+/* Exam layout */
+.exam-top{position:sticky;top:0;z-index:40;background:#0f172a;color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;box-shadow:0 4px 15px rgba(0,0,0,.3)}
+.timer{font-family:'Share Tech Mono';font-size:1.4rem;font-weight:bold;background:#1e293b;padding:4px 18px;border-radius:12px;border:2px solid #334155}
+.timer.warn{color:#fbbf24;border-color:#f59e0b}
+.timer.danger{color:#f87171;border-color:#ef4444;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.4}}
+.exam-wrap{display:grid;grid-template-columns:1fr 260px;gap:20px;max-width:1200px;margin:20px auto}
+@media(max-width:900px){.exam-wrap{grid-template-columns:1fr}}
+.side{position:sticky;top:70px;align-self:start;background:#fff;border-radius:16px;padding:16px;box-shadow:0 6px 20px rgba(0,0,0,.08);max-height:80vh;overflow-y:auto}
+@media(max-width:900px){.side{position:static;max-height:none}}
+.nav-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}
+.nav-q{border:2px solid #cbd5e1;background:#fff;border-radius:8px;padding:6px 0;font-weight:800;cursor:pointer;font-family:'Cairo'}
+.nav-q.done{background:#16a34a;border-color:#16a34a;color:#fff}
+.nav-q.current{outline:3px solid #f59e0b}
+.q-card{background:#fff;border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 4px 14px rgba(0,0,0,.06);border-top:5px solid var(--p)}
+.q-head{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.q-num{background:var(--p);color:#fff;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0}
+.q-topic{background:#eef2ff;color:#4338ca;font-size:.75rem;font-weight:800;padding:3px 10px;border-radius:20px}
+.q-text{font-size:1.1rem;font-weight:800;margin:6px 0 12px}
+.opt{display:flex;gap:10px;align-items:center;border:2px solid #e2e8f0;border-radius:12px;padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:.15s}
+.opt:hover{background:#f8fafc;border-color:#94a3b8}
+.opt input{accent-color:var(--p);width:18px;height:18px;flex-shrink:0}
+.opt-letter{background:#e2e8f0;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0}
+.opt.selected{border-color:var(--p);background:#eef2ff}
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.show{display:flex}
+.modal{background:#fff;border-radius:20px;max-width:600px;width:100%;padding:26px;max-height:80vh;overflow-y:auto}
+.missed-chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.missed-chip{background:#fee2e2;color:#991b1b;border:2px solid #ef4444;border-radius:10px;padding:6px 12px;font-weight:900;cursor:pointer}
+/* Results */
+.res-head{background:linear-gradient(135deg,#065f46,#0f172a);color:#fff;border-radius:24px;max-width:900px;margin:20px auto;padding:30px;text-align:center}
+.score-circle{width:140px;height:140px;border-radius:50%;background:#fff;color:#0f172a;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:16px auto;font-weight:900;box-shadow:0 0 0 8px rgba(255,255,255,.2)}
+.info-table{width:100%;max-width:700px;margin:14px auto;border-collapse:collapse;background:#fff;color:#1e293b;border-radius:12px;overflow:hidden}
+.info-table td{padding:10px 14px;border-bottom:1px solid #e2e8f0;font-weight:700;text-align:right}
+.info-table td:first-child{background:#f1f5f9;width:40%}
+.stats{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.stat{background:rgba(255,255,255,.12);padding:10px 20px;border-radius:14px;font-weight:800}
+.review{max-width:900px;margin:20px auto}
+.r-card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;border-right:6px solid #cbd5e1;break-inside:avoid}
+.r-card.ok{border-right-color:var(--ok)}
+.r-card.bad{border-right-color:var(--bad)}
+.r-card.none{border-right-color:#94a3b8}
+.r-opt{padding:8px 12px;border-radius:10px;margin:6px 0;border:2px solid #e2e8f0}
+.r-opt.correct{background:#dcfce7;border-color:#16a34a;font-weight:800}
+.r-opt.wrongpick{background:#fee2e2;border-color:#dc2626;font-weight:800}
+.r-badge{font-weight:900;padding:3px 12px;border-radius:20px;font-size:.8rem}
+.no-print{}
+@media print{
+  .no-print{display:none!important}
+  body{background:#fff}
+  .screen{padding:0}
+  .res-head{background:#0f172a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .r-card,.r-opt{break-inside:avoid}
+  .review{max-width:100%}
+}
+</style>
+</head>
+<body>
+
+<!-- ========== شاشة 1: التسجيل ========== -->
+<div class="screen active" id="screen-reg">
+  <div class="hero">
+    <span class="badge">🎓Sunshine T Academy </span>
+    <h1>امتحان المستوى الثاني — أردوينو</h1>
+    <p style="opacity:.85">الأنظمة المدمجة الذكية: من RGB إلى نظام الأمان المنزلي</p>
+    <div class="meta-chips">
+      <span class="chip">📝 100 سؤال اختياري</span>
+      <span class="chip">⏱️ 45 دقيقة</span>
+      <span class="chip">✅ درجة النجاح 60%</span>
+    </div>
+  </div>
+  <div class="reg-card">
+    <h2 style="margin:0;text-align:center">📋 بيانات الطالب</h2>
+    <label>اسم الطالب *</label>
+    <input type="text" id="stdName" placeholder="اكتب اسمك الثلاثي">
+    <label>عمر الطالب *</label>
+    <input type="number" id="stdAge" min="5" max="60" placeholder="مثال: 12">
+    <div class="date-box"><i class="fas fa-calendar-day"></i> تاريخ الامتحان (تلقائي): <span id="autoDate"></span> — <span id="autoTime"></span></div>
+    <div style="text-align:center;margin-top:20px">
+      <button class="btn btn-primary" onclick="startExam()"><i class="fas fa-play ml-2"></i> بدء الامتحان</button>
+    </div>
+    <p style="text-align:center;color:#64748b;font-size:.85rem;margin-top:14px">⚠️ بمجرد البدء يبدأ العدّاد ولا يمكن إيقافه. بالتوفيق!</p>
+  </div>
+</div>
+
+<!-- ========== شاشة 2: الامتحان ========== -->
+<div class="screen" id="screen-exam">
+  <div class="exam-top no-print">
+    <span style="font-weight:900"><i class="fas fa-user-graduate"></i> <span id="topName"></span></span>
+    <span style="font-weight:700;background:#1e293b;padding:4px 12px;border-radius:10px">المُجاب: <span id="answeredCount">0</span>/100</span>
+    <span class="timer" id="timer">45:00</span>
+    <button class="btn btn-green" style="margin-right:auto;padding:8px 22px" onclick="trySubmit()"><i class="fas fa-paper-plane ml-1"></i> تسليم الورقة</button>
+  </div>
+  <div class="exam-wrap">
+    <div id="questionsWrap"></div>
+    <div class="side no-print">
+      <b>🗺️ خريطة الأسئلة</b>
+      <div style="font-size:.75rem;color:#64748b;margin-top:4px">أخضر = مُجاب</div>
+      <div class="nav-grid" id="navGrid"></div>
+      <button class="btn btn-green" style="width:100%;margin-top:14px" onclick="trySubmit()">تسليم الورقة</button>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة الأسئلة المنسية -->
+<div class="overlay no-print" id="missedModal">
+  <div class="modal">
+    <h2 style="margin-top:0;color:#991b1b"><i class="fas fa-exclamation-triangle"></i> تنبيه: أسئلة لم تُجب عنها!</h2>
+    <p>تركت <b id="missedCount"></b> سؤالاً بدون إجابة. اضغط على رقم السؤال للانتقال إليه:</p>
+    <div class="missed-chips" id="missedChips"></div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="closeModal()">↩ العودة للإجابة</button>
+      <button class="btn btn-red" onclick="finalize(false)">تسليم كما هو</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== شاشة 3: النتيجة ========== -->
+<div class="screen" id="screen-results">
+  <div class="res-head">
+    <div style="font-weight:900;font-size:1.2rem">🏛️ Sunshine T Academy </div>
+    <div style="opacity:.85">نتيجة امتحان المستوى الثاني — أردوينو (الأنظمة المدمجة الذكية)</div>
+    <div class="score-circle"><span style="font-size:2rem" id="scoreNum">0</span><span>من 100</span></div>
+    <div id="gradeText" style="font-size:1.3rem;font-weight:900"></div>
+    <table class="info-table">
+      <tr><td>اسم الطالب</td><td id="rName"></td></tr>
+      <tr><td>العمر</td><td id="rAge"></td></tr>
+      <tr><td>تاريخ الامتحان</td><td id="rDate"></td></tr>
+      <tr><td>الامتحان</td><td>امتحان المستوى الثاني — مادة الأردوينو</td></tr>
+      <tr><td>المستوى</td><td>المستوى الثاني (15 محاضرة)</td></tr>
+      <tr><td>الزمن المستغرق</td><td id="rTime"></td></tr>
+    </table>
+    <div class="stats">
+      <span class="stat" style="color:#86efac">✅ صحيح: <span id="stOk"></span></span>
+      <span class="stat" style="color:#fca5a5">❌ خطأ: <span id="stBad"></span></span>
+      <span class="stat" style="color:#cbd5e1">⬜ بدون إجابة: <span id="stNone"></span></span>
+    </div>
+    <div class="no-print" style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print ml-1"></i> طباعة / حفظ PDF</button>
+      <button class="btn btn-gray" onclick="location.reload()"><i class="fas fa-redo ml-1"></i> محاولة جديدة</button>
+    </div>
+    <p class="no-print" style="font-size:.8rem;opacity:.7;margin-top:10px">💡 عند الطباعة اختر "Save as PDF" لتسليم الملف للأكاديمية</p>
+  </div>
+  <div class="review" id="reviewWrap"></div>
+</div>
+
+<script>
+/* ================= بنك الأسئلة (100 سؤال) ================= */
+const QUESTIONS=[
+/* RGB + Potentiometer */
+{t:"RGB وبوتانشيومتر",q:"ماذا يعني اختصار RGB؟",o:["أحمر وأخضر وأزرق","أحمر وأصفر وأسود","أزرق وأخضر وأبيض","ألوان عشوائية"],c:0},
+{t:"RGB وبوتانشيومتر",q:"كم لونًا تقريبًا يمكن أن ينتجه RGB LED؟",o:["7 ألوان","255 لونًا","16 مليون لون","1023 لونًا"],c:2},
+{t:"RGB وبوتانشيومتر",q:"ما القيمة التي يعيدها analogRead() في الأردوينو؟",o:["0 إلى 255","0 إلى 1023","0 إلى 100","1 إلى 10"],c:1},
+{t:"RGB وبوتانشيومتر",q:"ما مدى قيم analogWrite() (PWM)؟",o:["0 إلى 1023","0 إلى 180","0 إلى 360","0 إلى 255"],c:3},
+{t:"RGB وبوتانشيومتر",q:"ما وظيفة دالة map()؟",o:["تحويل قيمة من مدى إلى مدى آخر","رسم خريطة","تخزين القيم","توليد أرقام عشوائية"],c:0},
+{t:"RGB وبوتانشيومتر",q:"لتحويل قراءة البوتانشيومتر إلى مدى PWM نكتب:",o:["map(value,0,255,0,1023)","map(value,0,1023,0,255)","convert(value)","change(value,255)"],c:1},
+{t:"RGB وبوتانشيومتر",q:"أي أطراف الأردوينو تدعم PWM؟",o:["الأطراف التي عليها علامة ~","الأطراف 0 و1 فقط","الأطراف التماثلية فقط","لا يوجد أطراف تدعمه"],c:0},
+{t:"RGB وبوتانشيومتر",q:"البوتانشيومتر (المقاومة المتغيرة) يعطي للأردوينو:",o:["قيمة ثابتة لا تتغير","قيمة تماثلية متغيرة","إشارة صوتية","نبضات ضوئية"],c:1},
+{t:"RGB وبوتانشيومتر",q:"في مشروع اللمبة الذكية، الطرف الأوسط للبوتانشيومتر يوصل بـ:",o:["5V","GND","طرف تماثلي مثل A0","طرف 13"],c:2},
+{t:"RGB وبوتانشيومتر",q:"لإضاءة لون واحد في RGB بأقصى شدة نكتب analogWrite بقيمة:",o:["0","128","1023","255"],c:3},
+/* Servo */
+{t:"سيرفو موتور",q:"ما مدى زوايا حركة السيرفو موتور الشائع؟",o:["0 إلى 360 درجة","0 إلى 180 درجة","0 إلى 90 درجة","-180 إلى 180"],c:1},
+{t:"سيرفو موتور",q:"ما المكتبة المستخدمة للتحكم في السيرفو؟",o:["Motor.h","Angle.h","Servo.h","Move.h"],c:2},
+{t:"سيرفو موتور",q:"وظيفة الأمر myServo.attach(9) هي:",o:["تحريك السيرفو 9 درجات","ربط السيرفو بالطرف 9","فصل السيرفو","إعادة السيرفو للصفر"],c:1},
+{t:"سيرفو موتور",q:"وظيفة الأمر myServo.write(90) هي:",o:["الانتظار 90 ثانية","قراءة زاوية 90","تحريك السيرفو إلى الزاوية 90","كتابة رقم 90 على الشاشة"],c:2},
+{t:"سيرفو موتور",q:"الفرق الأساسي بين السيرفو ومحرك DC العادي:",o:["السيرفو يتوقف عند زاوية محددة بدقة","الـ DC يتحكم في الزوايا","السيرفو يدور باستمرار فقط","لا فرق بينهما"],c:0},
+{t:"سيرفو موتور",q:"كم سلكًا يخرج من السيرفو موتور؟",o:["سلكان","3 أسلاك","4 أسلاك","6 أسلاك"],c:1},
+{t:"سيرفو موتور",q:"سلك الإشارة (Signal) في السيرفو لونه غالبًا:",o:["بني","أحمر","برتقالي/أصفر","أسود"],c:2},
+{t:"سيرفو موتور",q:"في مشروع الباب الأتوماتيك، زاوية فتح الباب عادة:",o:["0 درجة","90 درجة","180 درجة","360 درجة"],c:1},
+{t:"سيرفو موتور",q:"نضع delay() بعد write() من أجل:",o:["إعطاء السيرفو وقتًا للوصول للزاوية","تسريع السيرفو","توفير الكهرباء","إطفاء السيرفو"],c:0},
+/* DHT11 + Water */
+{t:"DHT11 وحساس الماء",q:"حساس DHT11 يقيس:",o:["المسافة والسرعة","الحرارة والرطوبة","الضوء والصوت","الوزن والضغط"],c:1},
+{t:"DHT11 وحساس الماء",q:"مدى قياس الحرارة في DHT11:",o:["-50 إلى 100","0 إلى 50 درجة","0 إلى 100","20 إلى 80"],c:1},
+{t:"DHT11 وحساس الماء",q:"اسم المكتبة التي نبحث عنها في Arduino IDE للحساس:",o:["Temperature.h","Heat Library","DHT sensor library","Sensor11"],c:2},
+{t:"DHT11 وحساس الماء",q:"وظيفة isnan() في كود الحساس:",o:["قياس الرطوبة","تشغيل الحساس","التحقق من فشل القراءة (ليست رقمًا)","تحويل الحرارة"],c:2},
+{t:"DHT11 وحساس الماء",q:"نضع delay(2000) مع DHT11 لأن:",o:["الحساس يحتاج ثانيتين بين القراءات","لتسريع الحساس","لإضاءة الشاشة","بدون سبب"],c:0},
+{t:"DHT11 وحساس الماء",q:"الدالة التي تقرأ درجة الحرارة هي:",o:["temp.get()","readCelsius(11)","dht.readHeat()","dht.readTemperature()"],c:3},
+{t:"DHT11 وحساس الماء",q:"حساس الماء (Water Sensor) يستخدم لكشف:",o:["درجة الحرارة","وجود ماء أو مطر","المسافة","الضوء"],c:1},
+{t:"DHT11 وحساس الماء",q:"إشارة DHT11 للأردوينو تكون:",o:["رقمية عبر بروتوكول خاص","تماثلية 0-1023","صوتية","ضوئية"],c:0},
+/* LCD */
+{t:"شاشة LCD",q:"اسم الشاشة 16×2 يعني:",o:["16 سطر و2 حرف","16 حرفًا في السطر و2 سطر","16 لونًا و2 شاشة","16 فولت و2 أمبير"],c:1},
+{t:"شاشة LCD",q:"كم سلكًا تحتاج شاشة LCD بوحدة I2C؟",o:["16","8","4","2"],c:2},
+{t:"شاشة LCD",q:"طرفا SDA وSCL يوصلان في الأردوينو UNO بـ:",o:["2 و3","9 و10","A4 وA5","0 و1"],c:2},
+{t:"شاشة LCD",q:"للكتابة في السطر الثاني نستخدم:",o:["lcd.setCursor(0,1)","lcd.setCursor(0,0)","lcd.line(2)","lcd.second()"],c:0},
+{t:"شاشة LCD",q:"وظيفة lcd.clear():",o:["إطفاء الإضاءة","مسح الشاشة بالكامل","إعادة تشغيل الأردوينو","طباعة سطر"],c:1},
+{t:"شاشة LCD",q:"وظيفة lcd.backlight():",o:["تكبير الخط","مسح الشاشة","تغيير اللون","تشغيل الإضاءة الخلفية"],c:3},
+{t:"شاشة LCD",q:"عنوان I2C الشائع للشاشة:",o:["0x00","0xFF","0x27","16"],c:2},
+{t:"شاشة LCD",q:"لعرض نص على الشاشة نستخدم:",o:["lcd.show()","lcd.print()","lcd.writeScreen()","screen.text()"],c:1},
+/* Weather Station */
+{t:"محطة الطقس",q:"مكونات مشروع محطة الطقس الذكية:",o:["Servo + Keypad","RFID + Relay","DHT11 + LCD + RGB LED","IR Remote فقط"],c:2},
+{t:"محطة الطقس",q:"في محطة الطقس، اللون الأحمر يدل على:",o:["جو بارد","جو حار","جو معتدل","مطر"],c:1},
+{t:"محطة الطقس",q:"ترتيب النظام الصحيح (Input→Process→Output):",o:["عرض ثم قراءة","قراءة من الحساس ثم معالجة ثم عرض","معالجة بدون قراءة","عرض فقط"],c:1},
+{t:"محطة الطقس",q:"قبل دمج المكونات في مشروع واحد يجب أولًا:",o:["توصيل كل شيء دفعة واحدة","اختبار كل مكون على حدة","حذف المكتبات","كتابة الكود النهائي مباشرة"],c:1},
+{t:"محطة الطقس",q:"لتصنيف الحرارة (بارد/معتدل/حار) نستخدم:",o:["حلقة for فقط","if / else if / else","delay","tone()"],c:1},
+/* HC-SR04 + Radar */
+{t:"HC-SR04 والرادار",q:"حساس HC-SR04 يقيس:",o:["الحرارة","الرطوبة","المسافة","الوزن"],c:2},
+{t:"HC-SR04 والرادار",q:"طرفا الحساس الأساسيان هما:",o:["SDA وSCL","IN1 وIN2","Trig وEcho","R وG"],c:2},
+{t:"HC-SR04 والرادار",q:"معادلة حساب المسافة:",o:["duration × 0.034 ÷ 2","duration × 2 ÷ 0.034","duration + 0.034","duration ÷ 2 × 10"],c:0},
+{t:"HC-SR04 والرادار",q:"نقسم على 2 في المعادلة لأن:",o:["الصوت يذهب ويعود (مسافة مزدوجة)","لتسريع الحساب","الحساس ضعيف","للدقة فقط"],c:0},
+{t:"HC-SR04 والرادار",q:"وظيفة pulseIn(Echo, HIGH):",o:["إرسال نبضة","قياس زمن عودة الصدى","تشغيل الحساس","حساب السرعة"],c:1},
+{t:"HC-SR04 والرادار",q:"تقنية الحساس تحاكي أي حيوان في الطبيعة؟",o:["القطة","الخفاش","النسر","السمكة"],c:1},
+{t:"HC-SR04 والرادار",q:"في مشروع الرادار، الذي يحرك الحساس لمسح الزوايا:",o:["محرك DC","Relay","سيرفو موتور","Buzzer"],c:2},
+{t:"HC-SR04 والرادار",q:"أقصى مدى تقريبًا لقياس HC-SR04:",o:["10 سم","50 سم","400 سم","100 متر"],c:2},
+{t:"HC-SR04 والرادار",q:"في كود الرادار، حلقة for التي تزيد angle += 3 تعني:",o:["قياس المسافة 3 مرات","تحريك الحساس كل 3 درجات","إضاءة 3 ليدات","انتظار 3 ثوان"],c:1},
+/* Keypad + Lock */
+{t:"Keypad والقفل",q:"كم سلكًا تحتاج لوحة 4×4 Keypad؟",o:["16","12","8","4"],c:2},
+{t:"Keypad والقفل",q:"اسم مكتبة لوحة المفاتيح:",o:["Buttons.h","Keypad.h","Keys4x4","Matrix.h"],c:1},
+{t:"Keypad والقفل",q:"وظيفة keypad.getKey():",o:["الضغط على زر","قراءة الزر المضغوط","مسح الأزرار","إضاءة الأزرار"],c:1},
+{t:"Keypad والقفل",q:"لماذا صُممت اللوحة بنظام المصفوفة (صفوف وأعمدة)؟",o:["لتقليل عدد الأسلاك","للشكل الجمالي","لزيادة السعر","لتبطيء الاستجابة"],c:0},
+{t:"Keypad والقفل",q:"في مشروع القفل، زر # وظيفته:",o:["مسح الكود","تأكيد الكود وفحصه","فتح الباب مباشرة","إطفاء الشاشة"],c:1},
+{t:"Keypad والقفل",q:"زر * في مشروع القفل وظيفته:",o:["تأكيد الكود","تكرار آخر رقم","مسح ما تم إدخاله","الإنذار"],c:2},
+{t:"Keypad والقفل",q:"نعرض نجومًا (****) بدل الأرقام على الشاشة من أجل:",o:["حماية الكود من المتطفلين","الشاشة لا تدعم الأرقام","توفير الكهرباء","الزينة"],c:0},
+{t:"Keypad والقفل",q:"نوع المتغير المستخدم لتخزين الكود المدخل كنص:",o:["int","float","bool","String"],c:3},
+{t:"Keypad والقفل",q:"عند تطابق الكود المدخل مع الصحيح:",o:["يطلق الإنذار","يفتح السيرفو الباب ويظهر Access Granted","ينطفئ النظام","لا شيء"],c:1},
+/* IR */
+{t:"الريموت IR",q:"اختصار IR يعني:",o:["الأشعة تحت الحمراء","راديو داخلي","استجابة فورية","ريموت ذكي"],c:0},
+{t:"الريموت IR",q:"ضوء الأشعة تحت الحمراء:",o:["تراه العين بوضوح","لا تراه العين لكن كاميرا الموبايل تراه","يُرى ليلًا فقط","يُرى بالنظارات"],c:1},
+{t:"الريموت IR",q:"اسم مكتبة الريموت:",o:["Remote.h","TV.h","IRremote","Control.h"],c:2},
+{t:"الريموت IR",q:"كود HEX الذي يرسله كل زر يُعتبر:",o:["رقمًا عشوائيًا يتغير","بصمة فريدة للزر","اسم الزر نصيًا","درجة حرارة"],c:1},
+{t:"الريموت IR",q:"وظيفة IrReceiver.decode():",o:["إرسال كود","فحص وقراءة الكود المستلم","إطفاء المستقبل","تغيير العنوان"],c:1},
+{t:"الريموت IR",q:"وظيفة IrReceiver.resume():",o:["تجهيز المستقبل لكود جديد","تكرار نفس الكود","إطفاء المستقبل","إعادة التشغيل"],c:0},
+{t:"الريموت IR",q:"البادئة 0x في الكود 0xFFA25D تعني:",o:["الرقم سالب","الرقم بالنظام الست عشري HEX","الرقم عشري","عنوان شاشة"],c:1},
+/* Relay */
+{t:"Relay",q:"الـ Relay هو:",o:["مفتاح كهربائي يتحكم فيه تيار صغير","نوع من الحساسات","بطارية كبيرة","شاشة"],c:0},
+{t:"Relay",q:"نستخدم Relay مع الأردوينو من أجل:",o:["زيادة سرعة الأردوينو","التحكم بأجهزة قوية مع حماية الأردوينو","تجميل الكود","تقليل السعر"],c:1},
+{t:"Relay",q:"العزل الكهربائي في Relay يعني:",o:["فصل دائرة التحكم عن دائرة الحمل","وصل الدائرتين معًا","قطع الكهرباء نهائيًا","رفع الجهد"],c:0},
+{t:"Relay",q:"الجهد الآمن للتجارب في محاضرة Relay:",o:["220V","380V","أي جهد","5V أو 12V لأجهزة صغيرة"],c:3},
+{t:"Relay",q:"توصيل كهرباء المنزل 220V في هذه المرحلة:",o:["مسموح دائمًا","ممنوع نهائيًا للسلامة","مسموح بقفازات","مسموح ليلًا"],c:1},
+{t:"Relay",q:"طرف COM في Relay يعني:",o:["كمبيوتر","المشترك","أمر","مكتمل"],c:1},
+{t:"Relay",q:"طرف NO يعني:",o:["مفتوح عادة ويغلق عند التشغيل","مغلق عادة","لا يخرج تيارًا","بدون وظيفة"],c:0},
+{t:"Relay",q:"عند إرسال 5V من الأردوينو للـ Relay:",o:["يتلف Relay","يتحول الملف لمغناطيس يجذب المفتاح","لا يحدث شيء","يضيء ضوء فقط"],c:1},
+/* RFID */
+{t:"RFID",q:"اختصار RFID يعني:",o:["التعرف بترددات الراديو","تحميل ملفات سريع","إنترنت لاسلكي سريع","جهاز تردد حقيقي"],c:0},
+{t:"RFID",q:"الـ UID الخاص بالبطاقة هو:",o:["اسم صاحبها","رقم فريد لا يتكرر لكل بطاقة","تاريخ انتهائها","لونها"],c:1},
+{t:"RFID",q:"اسم مكتبة قارئ RC522:",o:["RFID.h","Card522","MFRC522","Reader.h"],c:2},
+{t:"RFID",q:"قارئ RC522 يعمل بجهد:",o:["5V فقط","12V","3.3V فقط","220V"],c:2},
+{t:"RFID",q:"بروتوكول التواصل بين RC522 والأردوينو:",o:["I2C","SPI","WiFi","Bluetooth"],c:1},
+{t:"RFID",q:"وظيفة PICC_IsNewCardPresent():",o:["قراءة رقم البطاقة","فحص وجود بطاقة جديدة قرب القارئ","مسح البطاقة","الكتابة على البطاقة"],c:1},
+{t:"RFID",q:"نستخدم toUpperCase() عند قراءة UID من أجل:",o:["توحيد حالة الحروف لضمان صحة المقارنة","تجميل الكود","تسريع القراءة","تقصير الرقم"],c:0},
+/* Final Project */
+{t:"المشروع النهائي",q:"الـ State Machine في المشروع النهائي تعني:",o:["تنظيم الكود بتتبع حالات النظام (IDLE/AUTH...)","آلة حقيقية","نوع موتور","شاشة"],c:0},
+{t:"المشروع النهائي",q:"نستخدم millis() بدل delay() في القفل الزمني لأن:",o:["delay يوقف النظام بالكامل","millis أدق رقميًا","delay ممنوع","لا فرق"],c:0},
+{t:"المشروع النهائي",q:"عدد المحاولات الفاشلة التي تفعّل الإنذار:",o:["1","3","5","10"],c:1},
+{t:"المشروع النهائي",q:"المكون الذي يكتشف اقتراب الشخص من الباب:",o:["DHT11","HC-SR04","LDR","بوتانشيومتر"],c:1},
+{t:"المشروع النهائي",q:"دور RGB LED في نظام الأمان:",o:["إضاءة الغرفة","مؤشر بصري لحالة النظام","زينة فقط","قياس الضوء"],c:1},
+{t:"المشروع النهائي",q:"أثناء فترة القفل (Lockout) النظام:",o:["يفتح الباب لأي شخص","يرفض المحاولات ويطلق إنذارًا حتى انتهاء المدة","ينطفئ للأبد","يحذف الأكواد"],c:1},
+/* General */
+{t:"مفاهيم عامة",q:"المكتبة (Library) في الأردوينو:",o:["كود جاهز كتبه خبراء نستخدمه للتسهيل","مكان لتخزين الملفات","نوع حساس","برنامج رسم"],c:0},
+{t:"مفاهيم عامة",q:"نثبّت المكتبات من:",o:["File → Save","Tools → Board","Sketch → Include Library → Manage Libraries","Help → About"],c:2},
+{t:"مفاهيم عامة",q:"وظيفة Serial.begin(9600):",o:["تشغيل شاشة","فتح قناة الاتصال التسلسلي بسرعة 9600","تحريك موتور","قراءة حساس"],c:1},
+{t:"مفاهيم عامة",q:"pinMode(13, OUTPUT) تعني:",o:["تعريف الطرف 13 كمخرج","تعريف الطرف 13 كمدخل","قراءة الطرف 13","إطفاء الطرف 13"],c:0},
+{t:"مفاهيم عامة",q:"الفرق بين digitalWrite و analogWrite:",o:["لا فرق","digital تشغيل/إطفاء و analog قيم تدريجية PWM","analog للقراءة فقط","digital تدريجي"],c:1},
+{t:"مفاهيم عامة",q:"نوع المتغير float يخزّن:",o:["أعدادًا صحيحة فقط","أعدادًا بها كسور عشرية","حروفًا","صح/خطأ"],c:1},
+{t:"مفاهيم عامة",q:"وظيفة constrain(x,0,255):",o:["تحويل x لنص","حصر قيمة x بين 0 و255","ضرب x في 255","رقم عشوائي"],c:1},
+{t:"مفاهيم عامة",q:"الأمر tone(8,1000,500) يعني:",o:["صوت بتردد 1000 على الطرف 8 لمدة 500 ملي ثانية","إضاءة الطرف 8","تحريك موتور","قراءة حساس"],c:0},
+{t:"مفاهيم عامة",q:"عدد الأطراف التماثلية (Analog) في الأردوينو UNO:",o:["4","6 (من A0 إلى A5)","8","13"],c:1},
+{t:"مفاهيم عامة",q:"جهد تشغيل منطق الأردوينو UNO:",o:["3.3V","5V","12V","220V"],c:1},
+{t:"مفاهيم عامة",q:"وحدة الزمن في دالة delay():",o:["ثوانٍ","ملي ثانية","ميكرو ثانية","دقائق"],c:1},
+{t:"مفاهيم عامة",q:"دالة delayMicroseconds(10) تنتظر:",o:["10 ثوان","10 ملي ثانية","10 ميكرو ثانية","10 دقائق"],c:2},
+{t:"مفاهيم عامة",q:"التعليقات (//) في الكود:",o:["تسرّع الكود","تشرح الكود ولا تؤثر على التشغيل","ضرورية للتشغيل","تغير الألوان"],c:1},
+{t:"مفاهيم عامة",q:"الأمر #include يستخدم لـ:",o:["تضمين مكتبة للبرنامج","تضمين صورة","تضمين رقم","ملف من الإنترنت"],c:0}
+];
+
+/* ================= المتغيرات ================= */
+let answers=new Array(QUESTIONS.length).fill(null);
+let student={name:"",age:"",date:"",time:""};
+let totalSec=45*60, timerInt=null, startTs=null, submitted=false;
+
+/* التاريخ التلقائي */
+(function(){
+  const n=new Date();
+  document.getElementById('autoDate').textContent=n.toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('autoTime').textContent=n.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
+})();
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
+
+/* ================= بدء الامتحان ================= */
+function startExam(){
+  const name=document.getElementById('stdName').value.trim();
+  const age=document.getElementById('stdAge').value.trim();
+  if(!name){alert('⚠️ من فضلك اكتب اسمك أولًا');return;}
+  if(!age||age<3||age>80){alert('⚠️ من فضلك اكتب عمرًا صحيحًا');return;}
+  const n=new Date();
+  student={name,age,date:n.toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'}),time:n.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})};
+  document.getElementById('topName').textContent=name;
+  renderQuestions();renderNav();
+  showScreen('screen-exam');
+  startTs=Date.now();
+  timerInt=setInterval(tick,1000);
+}
+
+/* ================= رسم الأسئلة ================= */
+function renderQuestions(){
+  document.getElementById('questionsWrap').innerHTML=QUESTIONS.map((it,i)=>`
+  <div class="q-card" id="q-${i}">
+    <div class="q-head"><span class="q-num">${i+1}</span><span class="q-topic">${it.t}</span></div>
+    <p class="q-text">${it.q}</p>
+    <div>${it.o.map((op,j)=>`
+      <label class="opt" id="opt-${i}-${j}">
+        <input type="radio" name="q${i}" value="${j}" onchange="selectAnswer(${i},${j})">
+        <span class="opt-letter">${'أبجد'[j]}</span><span>${op}</span>
+      </label>`).join('')}
+    </div>
+  </div>`).join('');
+}
+function renderNav(){
+  document.getElementById('navGrid').innerHTML=QUESTIONS.map((_,i)=>`<button class="nav-q" id="nv-${i}" onclick="gotoQ(${i})">${i+1}</button>`).join('');
+}
+function gotoQ(i){document.getElementById('q-'+i).scrollIntoView({behavior:'smooth',block:'center'});}
+function selectAnswer(i,j){
+  answers[i]=j;
+  document.getElementById('nv-'+i).classList.add('done');
+  QUESTIONS[i].o.forEach((_,k)=>document.getElementById(`opt-${i}-${k}`).classList.toggle('selected',k===j));
+  document.getElementById('answeredCount').textContent=answers.filter(a=>a!==null).length;
+}
+
+/* ================= المؤقت ================= */
+function tick(){
+  totalSec--;
+  const m=String(Math.floor(totalSec/60)).padStart(2,'0'),s=String(totalSec%60).padStart(2,'0');
+  const t=document.getElementById('timer');
+  t.textContent=`${m}:${s}`;
+  t.className='timer'+(totalSec<=60?' danger':totalSec<=300?' warn':'');
+  if(totalSec<=0){alert('⏰ انتهى الوقت! تم تسليم الورقة تلقائيًا.');finalize(true);}
+}
+
+/* ================= التسليم ================= */
+function trySubmit(){
+  if(submitted)return;
+  const missed=[];answers.forEach((a,i)=>{if(a===null)missed.push(i+1);});
+  if(missed.length){
+    document.getElementById('missedCount').textContent=missed.length;
+    document.getElementById('missedChips').innerHTML=missed.map(n=>`<span class="missed-chip" onclick="closeModal();gotoQ(${n-1})">${n}</span>`).join('');
+    document.getElementById('missedModal').classList.add('show');
+  }else finalize(false);
+}
+function closeModal(){document.getElementById('missedModal').classList.remove('show');}
+
+function finalize(auto){
+  if(submitted)return;submitted=true;
+  clearInterval(timerInt);closeModal();
+  let ok=0,bad=0,none=0;
+  answers.forEach((a,i)=>{if(a===null)none++;else if(a===QUESTIONS[i].c)ok++;else bad++;});
+  const used=Math.round((Date.now()-startTs)/1000);
+  const um=String(Math.floor(used/60)).padStart(2,'0'),us=String(used%60).padStart(2,'0');
+  document.getElementById('scoreNum').textContent=ok;
+  document.getElementById('rName').textContent=student.name;
+  document.getElementById('rAge').textContent=student.age+' سنة';
+  document.getElementById('rDate').textContent=student.date+' — '+student.time;
+  document.getElementById('rTime').textContent=`${um} دقيقة و ${us} ثانية`+(auto?' (تسليم تلقائي لانتهاء الوقت)':'');
+  document.getElementById('stOk').textContent=ok;
+  document.getElementById('stBad').textContent=bad;
+  document.getElementById('stNone').textContent=none;
+  const pct=ok;
+  let g='';
+  if(pct>=90)g='🏆 ممتاز! أنت مهندس حقيقي';
+  else if(pct>=80)g='🌟 جيد جدًا! أداء رائع';
+  else if(pct>=70)g='👍 جيد! استمر';
+  else if(pct>=60)g='✅ ناجح! تحتاج مراجعة بسيطة';
+  else g='📚 تحتاج مراجعة المنهج وإعادة المحاولة';
+  document.getElementById('gradeText').textContent=g;
+  /* المراجعة الكاملة */
+  document.getElementById('reviewWrap').innerHTML='<h2 style="text-align:center">📖 مراجعة الإجابات الكاملة</h2>'+
+  QUESTIONS.map((it,i)=>{
+    const a=answers[i];
+    const cls=a===null?'none':a===it.c?'ok':'bad';
+    const badge=a===null?'<span class="r-badge" style="background:#e2e8f0;color:#475569">⬜ لم تُجب</span>'
+      :a===it.c?'<span class="r-badge" style="background:#dcfce7;color:#166534">✅ إجابة صحيحة</span>'
+      :'<span class="r-badge" style="background:#fee2e2;color:#991b1b">❌ إجابة خاطئة</span>';
+    return `<div class="r-card ${cls}">
+      <div class="q-head"><span class="q-num">${i+1}</span><span class="q-topic">${it.t}</span>${badge}</div>
+      <p class="q-text">${it.q}</p>
+      ${it.o.map((op,j)=>{
+        let c='r-opt';
+        if(j===it.c)c+=' correct';
+        else if(j===a)c+=' wrongpick';
+        let tag='';
+        if(j===it.c)tag=' <b>(الإجابة الصحيحة ✔)</b>';
+        if(j===a&&j!==it.c)tag=' <b>(إجابتك ✘)</b>';
+        if(j===a&&j===it.c)tag=' <b>(إجابتك ✔)</b>';
+        return `<div class="${c}">${'أبجد'[j]}) ${op}${tag}</div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+  showScreen('screen-results');
+}
+</script>
+</body>
+</html>
